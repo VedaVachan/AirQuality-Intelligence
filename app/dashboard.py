@@ -359,6 +359,7 @@ elif predicted_aqi > 100:
     st.warning(
         "Moderate pollution. Sensitive groups should be careful."
     )
+    
 
 else:
     st.success(
