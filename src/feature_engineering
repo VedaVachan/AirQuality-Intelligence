@@ -1,0 +1,23 @@
+import pandas as pd
+
+df = pd.read_csv("data/merged_data.csv")
+
+df["date"] = pd.to_datetime(df["date"])
+
+# Time Features
+df["month"] = df["date"].dt.month
+df["day_of_year"] = df["date"].dt.dayofyear
+
+# Previous AQI
+df["aqi_lag1"] = df["aqi"].shift(1)
+
+# 7-Day Average AQI
+df["aqi_7day_avg"] = df["aqi"].rolling(7).mean()
+
+# Remove empty rows
+df.dropna(inplace=True)
+
+df.to_csv("data/final_dataset.csv", index=False)
+
+print(df.head())
+print("\nFinal Shape:", df.shape)
