@@ -1,6 +1,6 @@
 import requests
 
-API_KEY = "YOUR_OPENWEATHER_API_KEY"
+API_KEY = "dab3d934bcd3f161840cf38fd88ddbb0"
 
 CITY_COORDINATES = {
     "Ahmedabad": (23.0225,72.5714),
