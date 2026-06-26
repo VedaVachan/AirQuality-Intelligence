@@ -5,6 +5,7 @@ import joblib
 import folium
 import requests
 from streamlit_folium import st_folium
+from src.air_api import get_live_air_quality
 
 # ---------------------------
 # PAGE CONFIG
@@ -167,6 +168,8 @@ selected_city = st.sidebar.selectbox(
 
 weather = get_live_weather(selected_city)
 
+air = get_live_air_quality(selected_city)
+
 st.sidebar.metric(
     "Predicted AQI",
     int(predicted_aqi)
@@ -180,18 +183,26 @@ st.title("🌍 AI-Powered Urban Air Quality Intelligence Platform")
 
 st.markdown("---")
 
-
-
 # ---------------------------
 # METRICS
 # ---------------------------
 
 col1, col2, col3 = st.columns(3)
 
+aqi_map = {
+    1: 25,
+    2: 75,
+    3: 125,
+    4: 225,
+    5: 350
+}
+
+current_aqi = aqi_map[air["aqi"]]
+
 with col1:
     st.metric(
         "Current AQI",
-        int(latest["aqi"])
+        current_aqi
     )
 
 with col2:
@@ -203,9 +214,13 @@ with col2:
 with col3:
     st.metric(
         "Temperature",
-        f"{latest['temperature']} °C"
+        f"{weather['temperature']} °C"
     )
-    
+
+# ---------------------------
+# LIVE WEATHER
+# ---------------------------
+
 st.subheader("🌦 Live Weather")
 
 c1, c2, c3, c4 = st.columns(4)
@@ -231,8 +246,9 @@ with c3:
 with c4:
     st.metric(
         "Condition",
-        weather['condition']
+        weather["condition"]
     )
+
 
 
 # ---------------------------
