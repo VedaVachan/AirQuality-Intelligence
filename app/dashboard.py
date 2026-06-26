@@ -82,7 +82,7 @@ def get_recommendations(aqi):
 # LIVE WEATHER
 # ---------------------------
 
-def get_live_weather():
+def get_live_weather(city):
 
     API_KEY = "dab3d934bcd3f161840cf38fd88ddbb0"
 
@@ -93,7 +93,6 @@ def get_live_weather():
     )
 
     response = requests.get(url)
-
     data = response.json()
 
     return {
@@ -125,17 +124,6 @@ sample = pd.DataFrame([{
 }])
 
 predicted_aqi = float(model.predict(sample)[0])
-
-weather = get_live_weather(selected_city)
-
-# ---------------------------
-# TITLE
-# ---------------------------
-
-st.title("🌍 AI-Powered Urban Air Quality Intelligence Platform")
-
-st.markdown("---")
-
 
 # ---------------------------
 # SIDEBAR
@@ -177,10 +165,22 @@ selected_city = st.sidebar.selectbox(
     index=cities.index("Hyderabad")
 )
 
+weather = get_live_weather(selected_city)
+
 st.sidebar.metric(
     "Predicted AQI",
     int(predicted_aqi)
 )
+
+# ---------------------------
+# TITLE
+# ---------------------------
+
+st.title("🌍 AI-Powered Urban Air Quality Intelligence Platform")
+
+st.markdown("---")
+
+
 
 # ---------------------------
 # METRICS
