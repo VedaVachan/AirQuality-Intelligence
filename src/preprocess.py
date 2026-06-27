@@ -1,17 +1,67 @@
 import pandas as pd
 
-aqi = pd.read_csv("data/aqi_hyderabad.csv")
-weather = pd.read_csv("data/weather_hyderabad.csv")
+# ==========================================
+# Load Dataset
+# ==========================================
 
-aqi["date"] = pd.to_datetime(aqi["date"])
-weather["date"] = pd.to_datetime(weather["date"])
+df = pd.read_excel("data/india_aqi_weather_2015_2024.xlsx")
 
-aqi = aqi[["date", "Index Value"]]
-aqi.rename(columns={"Index Value": "aqi"}, inplace=True)
+print("Original Shape:", df.shape)
 
-merged = pd.merge(aqi, weather, on="date", how="inner")
+# ==========================================
+# Rename Columns
+# ==========================================
 
-merged.to_csv("data/merged_data.csv", index=False)
+df.rename(columns={
+    "PM2.5": "PM25"
+}, inplace=True)
 
-print("Merged Shape:", merged.shape)
-print(merged.head())
+# ==========================================
+# Convert Date
+# ==========================================
+
+df["Date"] = pd.to_datetime(df["Date"])
+
+# ==========================================
+# Remove Duplicate Rows
+# ==========================================
+
+df.drop_duplicates(inplace=True)
+
+# ==========================================
+# Sort Data
+# ==========================================
+
+df.sort_values(
+    by=["City", "Date"],
+    inplace=True
+)
+
+# ==========================================
+# Fill Missing Values
+# ==========================================
+
+numeric_columns = df.select_dtypes(include="number").columns
+
+for col in numeric_columns:
+    df[col] = df[col].fillna(df[col].median())
+
+# ==========================================
+# Save Clean Dataset
+# ==========================================
+
+df.to_csv(
+    "data/cleaned_dataset.csv",
+    index=False
+)
+
+print("\nCleaning Completed Successfully!")
+
+print("\nFinal Shape:")
+print(df.shape)
+
+print("\nColumns:")
+print(df.columns.tolist())
+
+print("\nFirst 5 Rows:")
+print(df.head())
