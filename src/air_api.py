@@ -3,6 +3,7 @@ import requests
 API_KEY = "dab3d934bcd3f161840cf38fd88ddbb0"
 
 CITY_COORDINATES = {
+
     "Ahmedabad": (23.0225,72.5714),
     "Bengaluru": (12.9716,77.5946),
     "Bhopal": (23.2599,77.4126),
@@ -28,15 +29,19 @@ CITY_COORDINATES = {
     "Surat": (21.1702,72.8311),
     "Thiruvananthapuram": (8.5241,76.9366),
     "Visakhapatnam": (17.6868,83.2185)
+
 }
 
+# ============================================
+# LIVE AIR QUALITY
+# ============================================
 
 def get_live_air_quality(city):
 
     lat, lon = CITY_COORDINATES[city]
 
     url = (
-        f"https://api.openweathermap.org/data/2.5/air_pollution"
+        "https://api.openweathermap.org/data/2.5/air_pollution"
         f"?lat={lat}&lon={lon}&appid={API_KEY}"
     )
 
@@ -51,15 +56,62 @@ def get_live_air_quality(city):
         "aqi": air["main"]["aqi"],
 
         "pm2_5": air["components"]["pm2_5"],
-
         "pm10": air["components"]["pm10"],
 
         "co": air["components"]["co"],
-
+        "no": air["components"]["no"],
         "no2": air["components"]["no2"],
-
+        "o3": air["components"]["o3"],
         "so2": air["components"]["so2"],
-
-        "o3": air["components"]["o3"]
+        "nh3": air["components"]["nh3"]
 
     }
+
+# ============================================
+# LIVE WEATHER
+# ============================================
+
+def get_live_weather(city):
+
+    url = (
+        "https://api.openweathermap.org/data/2.5/weather"
+        f"?q={city}&appid={API_KEY}&units=metric"
+    )
+
+    response = requests.get(url)
+
+    data = response.json()
+
+    return {
+
+        "temperature": data["main"]["temp"],
+        "humidity": data["main"]["humidity"],
+        "pressure": data["main"]["pressure"],
+
+        "wind_speed": data["wind"]["speed"],
+        "wind_direction": data["wind"]["deg"],
+
+        "condition": data["weather"][0]["main"],
+        "description": data["weather"][0]["description"]
+
+    }
+
+# ============================================
+# AQI CATEGORY
+# ============================================
+
+def get_aqi_status(aqi):
+
+    if aqi == 1:
+        return "Good"
+
+    elif aqi == 2:
+        return "Fair"
+
+    elif aqi == 3:
+        return "Moderate"
+
+    elif aqi == 4:
+        return "Poor"
+
+    return "Very Poor"
