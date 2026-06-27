@@ -56,7 +56,15 @@ print("After Cleaning :", df.shape)
 # SAVE
 # ------------------------------------------------
 
-df.to_csv("data/cleaned_dataset.csv", index=False)
+import os
+
+os.makedirs("data", exist_ok=True)
+
+output_file = os.path.join("data", "cleaned_dataset.csv")
+
+df.to_csv(output_file, index=False)
+
+print(f"\nDataset saved to: {os.path.abspath(output_file)}")
 
 print("\nDataset Saved Successfully!")
 
