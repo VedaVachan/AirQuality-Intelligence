@@ -5,7 +5,11 @@ import joblib
 import folium
 import requests
 from streamlit_folium import st_folium
-from src.air_api import get_live_air_quality
+from src.air_api import (
+    get_live_air_quality,
+    get_live_weather,
+    get_aqi_status
+)
 
 # ---------------------------
 # PAGE CONFIG
@@ -169,6 +173,8 @@ selected_city = st.sidebar.selectbox(
 weather = get_live_weather(selected_city)
 
 air = get_live_air_quality(selected_city)
+
+aqi_status = get_aqi_status(air["aqi"])
 
 st.sidebar.metric(
     "Predicted AQI",
