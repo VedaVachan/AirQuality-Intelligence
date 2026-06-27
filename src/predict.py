@@ -1,14 +1,22 @@
 import pandas as pd
 import joblib
 
+print("=" * 60)
+print("AI AIR QUALITY PREDICTION")
+print("=" * 60)
+
 # ==========================================
 # LOAD MODEL
 # ==========================================
 
 model = joblib.load("models/aqi_xgboost.pkl")
 
+model_features = joblib.load(
+    "models/model_features.pkl"
+)
+
 # ==========================================
-# LOAD FINAL DATASET
+# LOAD DATA
 # ==========================================
 
 df = pd.read_csv("data/final_dataset.csv")
@@ -17,43 +25,52 @@ df = pd.read_csv("data/final_dataset.csv")
 # SELECT CITY
 # ==========================================
 
-city = input("Enter City: ")
+cities = sorted(df["City"].unique())
 
-city_df = df[df["City"] == city]
+print("\nAvailable Cities:\n")
 
-if city_df.empty:
-    print("City not found!")
+for city in cities:
+    print("-", city)
+
+selected_city = input("\nEnter City Name: ").strip()
+
+if selected_city not in cities:
+    print("\nCity not found!")
     exit()
 
 # ==========================================
-# TAKE LATEST RECORD
+# GET LATEST RECORD
 # ==========================================
 
-latest = city_df.iloc[-1:]
+city_df = df[df["City"] == selected_city]
+
+latest = city_df.iloc[-1:].copy()
+
+actual_aqi = latest["AQI"].values[0]
 
 # ==========================================
-# REMOVE TARGET
+# PREPARE FEATURES
 # ==========================================
 
-X = latest.drop(columns=[
-    "AQI",
-    "Date",
-    "AQI_Bucket"
-], errors="ignore")
+X = latest.drop(
+    columns=[
+        "AQI",
+        "Date",
+        "AQI_Bucket"
+    ]
+)
 
-# ==========================================
-# ONE-HOT ENCODING
-# ==========================================
-
-X = pd.get_dummies(X)
+X = pd.get_dummies(
+    X,
+    columns=["City"]
+)
 
 # ==========================================
 # MATCH TRAINING FEATURES
 # ==========================================
 
-model_features = model.get_booster().feature_names
-
 for col in model_features:
+
     if col not in X.columns:
         X[col] = 0
 
@@ -66,36 +83,39 @@ X = X[model_features]
 prediction = model.predict(X)[0]
 
 # ==========================================
-# RESULTS
-# ==========================================
-
-print("\n" + "="*50)
-print("AI AIR QUALITY PREDICTION")
-print("="*50)
-
-print(f"City           : {city}")
-print(f"Actual AQI     : {latest['AQI'].values[0]:.2f}")
-print(f"Predicted AQI  : {prediction:.2f}")
-
-difference = abs(prediction - latest["AQI"].values[0])
-
-print(f"Difference     : {difference:.2f}")
-
-# ==========================================
 # AQI CATEGORY
 # ==========================================
 
-if prediction <= 50:
-    status = "Good 🟢"
-elif prediction <= 100:
-    status = "Moderate 🟡"
-elif prediction <= 200:
-    status = "Poor 🟠"
-elif prediction <= 300:
-    status = "Very Poor 🔴"
-else:
-    status = "Severe ⚫"
+def get_category(aqi):
 
-print(f"Category       : {status}")
+    if aqi <= 50:
+        return "🟢 Good"
 
-print("="*50)
+    elif aqi <= 100:
+        return "🟡 Moderate"
+
+    elif aqi <= 200:
+        return "🟠 Poor"
+
+    elif aqi <= 300:
+        return "🔴 Very Poor"
+
+    return "⚫ Severe"
+
+# ==========================================
+# RESULTS
+# ==========================================
+
+print("\n" + "=" * 60)
+
+print(f"City            : {selected_city}")
+
+print(f"Actual AQI      : {actual_aqi:.2f}")
+
+print(f"Predicted AQI   : {prediction:.2f}")
+
+print(f"Difference      : {abs(actual_aqi-prediction):.2f}")
+
+print(f"Category        : {get_category(prediction)}")
+
+print("=" * 60)

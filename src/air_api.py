@@ -2,6 +2,10 @@ import requests
 
 API_KEY = "dab3d934bcd3f161840cf38fd88ddbb0"
 
+# ======================================================
+# CITY COORDINATES
+# ======================================================
+
 CITY_COORDINATES = {
 
     "Ahmedabad": (23.0225,72.5714),
@@ -32,20 +36,58 @@ CITY_COORDINATES = {
 
 }
 
-# ============================================
-# LIVE AIR QUALITY
-# ============================================
+# ======================================================
+# LIVE WEATHER
+# ======================================================
+
+def get_live_weather(city):
+
+    url = (
+        f"https://api.openweathermap.org/data/2.5/weather"
+        f"?q={city}&appid={API_KEY}&units=metric"
+    )
+
+    response = requests.get(url, timeout=10)
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    return {
+
+        "temperature": data["main"]["temp"],
+
+        "humidity": data["main"]["humidity"],
+
+        "pressure": data["main"]["pressure"],
+
+        "wind_speed": data["wind"]["speed"],
+
+        "wind_direction": data["wind"].get("deg", 0),
+
+        "condition": data["weather"][0]["main"],
+
+        "description": data["weather"][0]["description"]
+
+    }
+
+
+# ======================================================
+# LIVE AQI
+# ======================================================
 
 def get_live_air_quality(city):
 
     lat, lon = CITY_COORDINATES[city]
 
     url = (
-        "https://api.openweathermap.org/data/2.5/air_pollution"
+        f"https://api.openweathermap.org/data/2.5/air_pollution"
         f"?lat={lat}&lon={lon}&appid={API_KEY}"
     )
 
-    response = requests.get(url)
+    response = requests.get(url, timeout=10)
+
+    response.raise_for_status()
 
     data = response.json()
 
@@ -56,62 +98,65 @@ def get_live_air_quality(city):
         "aqi": air["main"]["aqi"],
 
         "pm2_5": air["components"]["pm2_5"],
+
         "pm10": air["components"]["pm10"],
 
         "co": air["components"]["co"],
+
         "no": air["components"]["no"],
+
         "no2": air["components"]["no2"],
+
         "o3": air["components"]["o3"],
+
         "so2": air["components"]["so2"],
+
         "nh3": air["components"]["nh3"]
 
     }
 
-# ============================================
-# LIVE WEATHER
-# ============================================
 
-def get_live_weather(city):
+# ======================================================
+# AQI CATEGORY
+# ======================================================
 
-    url = (
-        "https://api.openweathermap.org/data/2.5/weather"
-        f"?q={city}&appid={API_KEY}&units=metric"
-    )
+def get_aqi_status(level):
 
-    response = requests.get(url)
+    categories = {
 
-    data = response.json()
+        1: "🟢 Good",
 
-    return {
+        2: "🟡 Fair",
 
-        "temperature": data["main"]["temp"],
-        "humidity": data["main"]["humidity"],
-        "pressure": data["main"]["pressure"],
+        3: "🟠 Moderate",
 
-        "wind_speed": data["wind"]["speed"],
-        "wind_direction": data["wind"]["deg"],
+        4: "🔴 Poor",
 
-        "condition": data["weather"][0]["main"],
-        "description": data["weather"][0]["description"]
+        5: "⚫ Very Poor"
 
     }
 
-# ============================================
-# AQI CATEGORY
-# ============================================
+    return categories.get(level, "Unknown")
 
-def get_aqi_status(aqi):
 
-    if aqi == 1:
-        return "Good"
+# ======================================================
+# AQI SCORE
+# ======================================================
 
-    elif aqi == 2:
-        return "Fair"
+def convert_aqi_to_score(level):
 
-    elif aqi == 3:
-        return "Moderate"
+    mapping = {
 
-    elif aqi == 4:
-        return "Poor"
+        1: 25,
 
-    return "Very Poor"
+        2: 75,
+
+        3: 125,
+
+        4: 225,
+
+        5: 350
+
+    }
+
+    return mapping.get(level, 0)
