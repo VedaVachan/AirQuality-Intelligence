@@ -1,67 +1,72 @@
 import pandas as pd
 
-# ==========================================
-# Load Dataset
-# ==========================================
+print("=" * 60)
+print("Loading Dataset...")
+print("=" * 60)
 
-df = pd.read_excel("data/india_aqi_weather_2015_2024.csv")
+# ------------------------------------------------
+# LOAD CSV
+# ------------------------------------------------
 
-print("Original Shape:", df.shape)
+df = pd.read_csv("data/india_aqi_weather_2015_2024.csv")
 
-# ==========================================
-# Rename Columns
-# ==========================================
+print("Original Shape :", df.shape)
 
-df.rename(columns={
-    "PM2.5": "PM25"
-}, inplace=True)
+# ------------------------------------------------
+# REMOVE DUPLICATES
+# ------------------------------------------------
 
-# ==========================================
-# Convert Date
-# ==========================================
+df = df.drop_duplicates()
+
+# ------------------------------------------------
+# CONVERT DATE
+# ------------------------------------------------
 
 df["Date"] = pd.to_datetime(df["Date"])
 
-# ==========================================
-# Remove Duplicate Rows
-# ==========================================
+# ------------------------------------------------
+# SORT DATA
+# ------------------------------------------------
 
-df.drop_duplicates(inplace=True)
+df = df.sort_values(["City", "Date"])
 
-# ==========================================
-# Sort Data
-# ==========================================
+# ------------------------------------------------
+# FILL MISSING VALUES
+# ------------------------------------------------
 
-df.sort_values(
-    by=["City", "Date"],
-    inplace=True
-)
-
-# ==========================================
-# Fill Missing Values
-# ==========================================
-
-numeric_columns = df.select_dtypes(include="number").columns
+numeric_columns = df.select_dtypes(include=["number"]).columns
 
 for col in numeric_columns:
-    df[col] = df[col].fillna(df[col].median())
+    df[col] = df.groupby("City")[col].transform(
+        lambda x: x.interpolate()
+    )
 
-# ==========================================
-# Save Clean Dataset
-# ==========================================
+df = df.fillna(method="bfill")
+df = df.fillna(method="ffill")
 
-df.to_csv(
-    "data/cleaned_dataset.csv",
-    index=False
-)
+# ------------------------------------------------
+# REMOVE REMAINING EMPTY ROWS
+# ------------------------------------------------
 
-print("\nCleaning Completed Successfully!")
+df = df.dropna()
 
-print("\nFinal Shape:")
-print(df.shape)
+print("After Cleaning :", df.shape)
+
+# ------------------------------------------------
+# SAVE
+# ------------------------------------------------
+
+df.to_csv("data/cleaned_dataset.csv", index=False)
+
+print("\nDataset Saved Successfully!")
+
+print("\nSaved as:")
+print("data/cleaned_dataset.csv")
 
 print("\nColumns:")
+
 print(df.columns.tolist())
 
-print("\nFirst 5 Rows:")
+print("\nFirst Five Rows:\n")
+
 print(df.head())
