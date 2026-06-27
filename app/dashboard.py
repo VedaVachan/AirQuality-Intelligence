@@ -1,654 +1,943 @@
+# ============================================================
+# AI POWERED URBAN AIR QUALITY INTELLIGENCE
+# Dashboard
+# Phase 1A
+# ============================================================
+
+# ============================================================
+# IMPORT LIBRARIES
+# ============================================================
+
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import numpy as np
 import joblib
+import plotly.express as px
+import plotly.graph_objects as go
 import folium
-import requests
 from streamlit_folium import st_folium
+from datetime import datetime
+
+# ------------------------------------------------------------
+# PROJECT MODULES
+# ------------------------------------------------------------
+
 from src.air_api import (
-    get_live_air_quality,
     get_live_weather,
+    get_live_air_quality,
     get_aqi_status
 )
 
-# ---------------------------
-# PAGE CONFIG
-# ---------------------------
+from src.predict import predict_aqi
+
+# ============================================================
+# PAGE CONFIGURATION
+# ============================================================
 
 st.set_page_config(
-    page_title="AI-Powered Urban Air Quality Intelligence",
+
+    page_title="AI Powered Urban Air Quality Intelligence",
+
     page_icon="🌍",
-    layout="wide"
+
+    layout="wide",
+
+    initial_sidebar_state="collapsed"
+
 )
 
+# ============================================================
+# REMOVE DEFAULT STREAMLIT STYLE
+# ============================================================
 
+st.markdown("""
 
+<style>
 
-# ---------------------------
-# HEALTH ADVISORY
-# ---------------------------
+#MainMenu {
+visibility:hidden;
+}
 
-def get_health_advisory(aqi):
+footer{
+visibility:hidden;
+}
 
-    if aqi <= 50:
-        return "✅ Good Air Quality - Safe for outdoor activities"
+header{
+visibility:hidden;
+}
 
-    elif aqi <= 100:
-        return "🟡 Moderate Air Quality - Acceptable for most people"
+</style>
 
-    elif aqi <= 150:
-        return "🟠 Unhealthy for Sensitive Groups - Elderly and children should limit exposure"
+""", unsafe_allow_html=True)
 
-    elif aqi <= 200:
-        return "🔴 Poor Air Quality - Wear masks and avoid outdoor exercise"
+# ============================================================
+# LOAD DATASET
+# ============================================================
 
-    else:
-        return "⚫ Very Poor Air Quality - Stay indoors whenever possible"
+@st.cache_data
+def load_dataset():
 
+    df = pd.read_csv("data/final_dataset.csv")
 
-# ---------------------------
-# GOVERNMENT RECOMMENDATIONS
-# ---------------------------
+    df["Date"] = pd.to_datetime(df["Date"])
 
-def get_recommendations(aqi):
+    return df
 
-    if aqi <= 100:
-        return [
-            "Promote public transport",
-            "Continue regular monitoring",
-            "Maintain green zones"
-        ]
+# ============================================================
+# LOAD MODEL
+# ============================================================
 
-    elif aqi <= 150:
-        return [
-            "Inspect construction sites",
-            "Increase road cleaning",
-            "Monitor industrial emissions"
-        ]
+@st.cache_resource
+def load_model():
 
-    elif aqi <= 200:
-        return [
-            "Restrict diesel generators",
-            "Increase water sprinkling",
-            "Inspect pollution hotspots",
-            "Issue public health alerts"
-        ]
+    model = joblib.load("models/aqi_xgboost.pkl")
 
-    else:
-        return [
-            "Emergency pollution response",
-            "Restrict high-emission activities",
-            "Continuous hotspot monitoring",
-            "City-wide health advisories"
-        ]
+    features = joblib.load("models/model_features.pkl")
 
+    return model, features
 
-# ---------------------------
-# LIVE WEATHER
-# ---------------------------
+# ============================================================
+# LOAD EVERYTHING
+# ============================================================
 
-def get_live_weather(city):
+df = load_dataset()
 
-    API_KEY = "dab3d934bcd3f161840cf38fd88ddbb0"
+model, model_features = load_model()
 
+# ============================================================
+# CITY LIST
+# ============================================================
 
-    url = (
-        f"https://api.openweathermap.org/data/2.5/weather"
-        f"?q={city}&appid={API_KEY}&units=metric"
+cities = sorted(
+
+    df["City"].unique()
+
+)
+
+# ============================================================
+# DEFAULT CITY
+# ============================================================
+
+DEFAULT_CITY = "Hyderabad"
+
+# ============================================================
+# AQI SCALE
+# ============================================================
+
+AQI_SCALE = {
+
+    1:25,
+
+    2:75,
+
+    3:125,
+
+    4:225,
+
+    5:350
+
+}
+
+# ============================================================
+# CONVERT API AQI
+# ============================================================
+
+def convert_api_aqi(aqi):
+
+    return AQI_SCALE.get(
+
+        int(aqi),
+
+        0
+
     )
 
-    response = requests.get(url)
-    data = response.json()
+# ============================================================
+# GET CITY DATA
+# ============================================================
 
-    return {
-        "temperature": data["main"]["temp"],
-        "humidity": data["main"]["humidity"],
-        "wind_speed": data["wind"]["speed"],
-        "condition": data["weather"][0]["main"]
-    }
+def get_city_history(city):
 
+    city_df = df[
 
-# ---------------------------
-# LOAD DATA
-# ---------------------------
+        df["City"] == city
 
-df = pd.read_csv("data/final_dataset.csv")
+    ].copy()
 
-model = joblib.load("models/aqi_xgboost.pkl")
+    city_df.sort_values(
 
-latest = df.iloc[-1]
+        "Date",
 
-sample = pd.DataFrame([{
-    "temperature": latest["temperature"],
-    "rainfall": latest["rainfall"],
-    "wind_speed": latest["wind_speed"],
-    "month": latest["month"],
-    "day_of_year": latest["day_of_year"],
-    "aqi_lag1": latest["aqi_lag1"],
-    "aqi_7day_avg": latest["aqi_7day_avg"]
-}])
+        inplace=True
 
-predicted_aqi = float(model.predict(sample)[0])
+    )
 
-# ---------------------------
-# SIDEBAR
-# ---------------------------
+    return city_df
 
-st.sidebar.title("🌍 Air Quality Controls")
+# ============================================================
+# LOAD LIVE DATA
+# ============================================================
 
-cities = [
-    "Ahmedabad",
-    "Bengaluru",
-    "Bhopal",
-    "Bhubaneswar",
-    "Chandigarh",
-    "Chennai",
-    "Coimbatore",
-    "Delhi",
-    "Guwahati",
-    "Hyderabad",
-    "Indore",
-    "Jaipur",
-    "Kanpur",
-    "Kochi",
-    "Kolkata",
-    "Lucknow",
-    "Mumbai",
-    "Nagpur",
-    "Patna",
-    "Pune",
-    "Raipur",
-    "Ranchi",
-    "Surat",
-    "Thiruvananthapuram",
-    "Visakhapatnam"
-]
+@st.cache_data(ttl=300)
 
-selected_city = st.sidebar.selectbox(
-    "Select City",
-    cities,
-    index=cities.index("Hyderabad")
+def load_live_data(city):
+
+    weather = get_live_weather(city)
+
+    air = get_live_air_quality(city)
+
+    return weather, air
+
+# ============================================================
+# PREDICT AQI
+# ============================================================
+
+def get_prediction(city_df):
+
+    latest = city_df.iloc[-1]
+
+    prediction = predict_aqi(
+
+        latest,
+
+        model,
+
+        model_features
+
+    )
+
+    return prediction
+
+# ============================================================
+# LOAD CITY
+# ============================================================
+
+selected_city = DEFAULT_CITY
+
+city_df = get_city_history(
+
+    selected_city
+
 )
 
-weather = get_live_weather(selected_city)
+weather, air = load_live_data(
 
-air = get_live_air_quality(selected_city)
+    selected_city
 
-aqi_status = get_aqi_status(air["aqi"])
-
-st.sidebar.metric(
-    "Predicted AQI",
-    int(predicted_aqi)
 )
 
-# ---------------------------
-# TITLE
-# ---------------------------
+predicted_aqi = get_prediction(
 
-st.title("🌍 AI-Powered Urban Air Quality Intelligence Platform")
+    city_df
+
+)
+
+current_aqi = convert_api_aqi(
+
+    air["aqi"]
+
+)
+
+current_time = datetime.now()
+
+# ============================================================
+# PHASE 1A COMPLETED
+# ============================================================
+
+# ============================================================
+# PHASE 1C
+# DASHBOARD HEADER
+# ============================================================
+
+# -----------------------------
+# HEADER CONTAINER
+# -----------------------------
+
+st.markdown(
+"""
+<div class="dashboard-header">
+
+<div class="dashboard-title">
+🌍 AI-Powered Urban Air Quality Intelligence
+</div>
+
+<div class="dashboard-subtitle">
+Smart City Environmental Intelligence Platform
+</div>
+
+</div>
+""",
+unsafe_allow_html=True
+)
+
+# -----------------------------
+# HEADER INFORMATION
+# -----------------------------
+
+left, center, right = st.columns([3,2,2])
+
+# -----------------------------
+# LAST UPDATED
+# -----------------------------
+
+with left:
+
+    st.markdown("#### 📅 Last Updated")
+
+    st.info(
+        current_time.strftime(
+            "%d %B %Y | %I:%M %p"
+        )
+    )
+
+# -----------------------------
+# CITY SELECTOR
+# -----------------------------
+
+with center:
+
+    st.markdown("#### 📍 Select City")
+
+    selected_city = st.selectbox(
+
+        "",
+
+        cities,
+
+        index=cities.index(DEFAULT_CITY),
+
+        label_visibility="collapsed"
+
+    )
+
+# -----------------------------
+# LIVE STATUS
+# -----------------------------
+
+with right:
+
+    st.markdown("#### 📡 System Status")
+
+    st.success("🟢 LIVE")
+
+# ============================================================
+# LOAD CITY AFTER SELECTION
+# ============================================================
+
+city_df = get_city_history(
+
+    selected_city
+
+)
+
+weather, air = load_live_data(
+
+    selected_city
+
+)
+
+predicted_aqi = get_prediction(
+
+    city_df
+
+)
+
+current_aqi = convert_api_aqi(
+
+    air["aqi"]
+
+)
 
 st.markdown("---")
 
-# ---------------------------
-# METRICS
-# ---------------------------
+# ============================================================
+# PHASE 1D
+# LIVE KPI DASHBOARD
+# ============================================================
 
-col1, col2, col3 = st.columns(3)
+st.markdown(
+"""
+<div class="section-title">
+📊 Live Environmental Overview
+</div>
 
-aqi_map = {
-    1: 25,
-    2: 75,
-    3: 125,
-    4: 225,
-    5: 350
-}
+<div class="section-description">
+Real-time environmental conditions for the selected smart city.
+</div>
+""",
+unsafe_allow_html=True
+)
 
-current_aqi = aqi_map[air["aqi"]]
+# ============================================================
+# EXTRACT LIVE VALUES
+# ============================================================
 
-with col1:
-    st.metric(
-        "Current AQI",
-        current_aqi
-    )
+temperature = weather["temperature"]
+humidity = weather["humidity"]
+wind_speed = weather["wind_speed"]
+pressure = weather["pressure"]
 
-with col2:
-    st.metric(
-        "Predicted AQI",
-        int(predicted_aqi)
-    )
+condition = weather["condition"]
 
-with col3:
-    st.metric(
-        "Temperature",
-        f"{weather['temperature']} °C"
-    )
+visibility = "Good"
 
-# ---------------------------
-# LIVE WEATHER
-# ---------------------------
+if current_aqi > 150:
+    visibility = "Poor"
 
-st.subheader("🌦 Live Weather")
+elif current_aqi > 100:
+    visibility = "Moderate"
 
-c1, c2, c3, c4 = st.columns(4)
+# ============================================================
+# KPI CARDS
+# ============================================================
+
+c1, c2, c3, c4, c5, c6 = st.columns(6)
+
+# ------------------------------------------------------------
 
 with c1:
-    st.metric(
-        "Temperature",
-        f"{weather['temperature']} °C"
-    )
+
+    st.markdown(f"""
+<div class="kpi-card fade-in">
+
+<div class="metric-icon">
+🌫
+</div>
+
+<div class="card-subtitle">
+Current AQI
+</div>
+
+<h2>{current_aqi}</h2>
+
+</div>
+""", unsafe_allow_html=True)
+
+# ------------------------------------------------------------
 
 with c2:
-    st.metric(
-        "Humidity",
-        f"{weather['humidity']} %"
-    )
+
+    st.markdown(f"""
+<div class="kpi-card fade-in">
+
+<div class="metric-icon">
+🌡
+</div>
+
+<div class="card-subtitle">
+Temperature
+</div>
+
+<h2>{temperature:.1f}°C</h2>
+
+</div>
+""", unsafe_allow_html=True)
+
+# ------------------------------------------------------------
 
 with c3:
-    st.metric(
-        "Wind Speed",
-        f"{weather['wind_speed']} m/s"
-    )
+
+    st.markdown(f"""
+<div class="kpi-card fade-in">
+
+<div class="metric-icon">
+💧
+</div>
+
+<div class="card-subtitle">
+Humidity
+</div>
+
+<h2>{humidity}%</h2>
+
+</div>
+""", unsafe_allow_html=True)
+
+# ------------------------------------------------------------
 
 with c4:
-    st.metric(
-        "Condition",
-        weather["condition"]
-    )
 
+    st.markdown(f"""
+<div class="kpi-card fade-in">
 
+<div class="metric-icon">
+💨
+</div>
 
-# ---------------------------
-# AQI RISK SCORE
-# ---------------------------
+<div class="card-subtitle">
+Wind Speed
+</div>
 
-st.subheader("🎯 AQI Risk Score")
+<h2>{wind_speed:.1f} m/s</h2>
 
-risk_score = min(int(predicted_aqi / 2), 100)
+</div>
+""", unsafe_allow_html=True)
 
-st.progress(risk_score)
+# ------------------------------------------------------------
 
-st.metric(
-    "Risk Score",
-    f"{risk_score}/100"
-)
+with c5:
 
+    st.markdown(f"""
+<div class="kpi-card fade-in">
 
-# ---------------------------
-# AQI GAUGE
-# ---------------------------
+<div class="metric-icon">
+🧭
+</div>
 
-import plotly.graph_objects as go
+<div class="card-subtitle">
+Pressure
+</div>
 
-st.subheader("🎯 AQI Gauge")
+<h2>{pressure} hPa</h2>
 
-gauge = go.Figure(
-    go.Indicator(
-        mode="gauge+number",
-        value=predicted_aqi,
-        title={"text": "AQI"},
-        gauge={
-            "axis": {"range": [0, 300]},
-            "steps": [
-                {"range": [0, 50], "color": "green"},
-                {"range": [50, 100], "color": "yellow"},
-                {"range": [100, 200], "color": "orange"},
-                {"range": [200, 300], "color": "red"}
-            ]
-        }
-    )
-)
+</div>
+""", unsafe_allow_html=True)
 
-st.plotly_chart(
-    gauge,
-    use_container_width=True
-)
+# ------------------------------------------------------------
 
+with c6:
 
-# ---------------------------
-# AQI STATUS
-# ---------------------------
+    st.markdown(f"""
+<div class="kpi-card fade-in">
 
-st.subheader("📊 AQI Status")
+<div class="metric-icon">
+👁
+</div>
 
-if predicted_aqi <= 50:
-    st.success("🟢 GOOD")
-elif predicted_aqi <= 100:
-    st.info("🟡 MODERATE")
-elif predicted_aqi <= 200:
-    st.warning("🟠 POOR")
-else:
-    st.error("🔴 VERY POOR")
+<div class="card-subtitle">
+Visibility
+</div>
 
+<h2>{visibility}</h2>
 
-# ---------------------------
-# HEALTH ADVISORY
-# ---------------------------
+</div>
+""", unsafe_allow_html=True)
 
-st.subheader("🏥 Citizen Health Advisory")
+st.markdown("<br>", unsafe_allow_html=True)
 
-st.info(
-    get_health_advisory(predicted_aqi)
-)
+# ============================================================
+# PHASE 1E
+# AQI GAUGE + LIVE POLLUTANTS
+# ============================================================
 
-# ---------------------------
-# SENSITIVE GROUP ALERT
-# ---------------------------
-
-st.subheader("👨‍👩‍👧 Sensitive Group Alert")
-
-if predicted_aqi > 150:
-    st.error(
-        "Children, elderly citizens and asthma patients should stay indoors."
-    )
-
-elif predicted_aqi > 100:
-    st.warning(
-        "Sensitive groups should reduce outdoor activities."
-    )
-
-else:
-    st.success(
-        "Air quality is safe for most people."
-    )
-    
-# ---------------------------
-# GOVT RECOMMENDATIONS
-# ---------------------------
-
-st.subheader("🏛 Government Recommendations")
-
-for item in get_recommendations(predicted_aqi):
-    st.write("•", item)
-
-# ---------------------------
-# POLLUTION SOURCE ANALYSIS
-# ---------------------------
-
-st.subheader("🏭 Pollution Source Analysis")
-
-source_df = pd.DataFrame({
-    "Source": [
-        "Traffic",
-        "Industry",
-        "Construction",
-        "Residential"
-    ],
-    "Contribution": [
-        40,
-        30,
-        20,
-        10
-    ]
-})
-
-source_fig = px.pie(
-    source_df,
-    names="Source",
-    values="Contribution",
-    hole=0.4,
-    title="Estimated Pollution Sources"
-)
-
-st.plotly_chart(
-    source_fig,
-    use_container_width=True
-)
-
-# ---------------------------
-# POLLUTION ALERT
-# ---------------------------
-
-st.subheader("🚨 Pollution Alert")
-
-if predicted_aqi > 150:
-    st.error(
-        "High pollution expected. Avoid outdoor activities."
-    )
-
-elif predicted_aqi > 100:
-    st.warning(
-        "Moderate pollution. Sensitive groups should be careful."
-    )
-    
-
-else:
-    st.success(
-        "Air quality is acceptable."
-    )
-
-# ---------------------------
-# DAILY REPORT
-# ---------------------------
-
-st.subheader("📄 Daily Air Quality Report")
-
-report = f"""
-Date: Latest Available Data
-
-Current AQI: {int(latest['aqi'])}
-Predicted AQI: {int(predicted_aqi)}
-
-Temperature: {latest['temperature']} °C
-Wind Speed: {latest['wind_speed']} km/h
-
-Recommended Actions:
+st.markdown(
 """
+<div class="section-title">
+🎯 Air Quality Intelligence
+</div>
 
-for item in get_recommendations(predicted_aqi):
-    report += f"\n• {item}"
-
-st.text_area(
-    "Generated Report",
-    report,
-    height=220
+<div class="section-description">
+Real-time AQI monitoring and pollutant concentrations.
+</div>
+""",
+unsafe_allow_html=True
 )
 
-st.download_button(
-    label="📥 Download Report",
-    data=report,
-    file_name="air_quality_report.txt",
-    mime="text/plain"
-)
+left, right = st.columns([2,1])
 
-# ---------------------------
-# AQI TREND
-# ---------------------------
+# ============================================================
+# AQI GAUGE
+# ============================================================
 
-st.subheader("📈 AQI Trend")
+with left:
 
-fig = px.line(
-    df.tail(365),
-    x="date",
-    y="aqi",
-    title="AQI Trend (Last 365 Days)"
-)
+    gauge = go.Figure(
+        go.Indicator(
 
-st.plotly_chart(
-    fig,
-    width="stretch"
-)
+            mode="gauge+number",
 
-st.subheader("📅 Next 7-Day AQI Forecast")
+            value=current_aqi,
 
-forecast_days = pd.DataFrame({
-    "Day":[
-        "Today",
-        "Day 2",
-        "Day 3",
-        "Day 4",
-        "Day 5",
-        "Day 6",
-        "Day 7"
-    ],
-    "Forecast AQI":[
-        predicted_aqi,
-        predicted_aqi+3,
-        predicted_aqi+5,
-        predicted_aqi+2,
-        predicted_aqi-2,
-        predicted_aqi-4,
-        predicted_aqi-1
-    ]
-})
+            number={
+                "font":{"size":52}
+            },
 
-forecast_fig = px.line(
-    forecast_days,
-    x="Day",
-    y="Forecast AQI",
-    markers=True,
-    title="7-Day AQI Forecast"
-)
+            title={
+                "text":"Current AQI",
+                "font":{"size":24}
+            },
 
-st.plotly_chart(
-    forecast_fig,
-    width="stretch"
-)
+            gauge={
 
+                "axis":{"range":[0,500]},
 
-# ---------------------------
-# WEATHER TREND
-# ---------------------------
+                "bar":{"color":"deepskyblue"},
 
-st.subheader("🌦 Weather Overview")
+                "steps":[
 
-weather_fig = px.line(
-    df.tail(365),
-    x="date",
-    y=["temperature", "wind_speed"],
-    title="Temperature and Wind Speed"
-)
+                    {
+                        "range":[0,50],
+                        "color":"#2ECC71"
+                    },
 
-st.plotly_chart(
-    weather_fig,
-    use_container_width=True
-)
+                    {
+                        "range":[50,100],
+                        "color":"#F1C40F"
+                    },
 
-st.subheader("🚦 AQI Category Distribution")
+                    {
+                        "range":[100,200],
+                        "color":"#F39C12"
+                    },
 
-df["category"] = pd.cut(
-    df["aqi"],
-    bins=[0,50,100,200,500],
-    labels=["Good","Moderate","Poor","Very Poor"]
-)
+                    {
+                        "range":[200,300],
+                        "color":"#E74C3C"
+                    },
 
-category_counts = df["category"].value_counts()
+                    {
+                        "range":[300,500],
+                        "color":"#8E44AD"
+                    }
 
-pie_fig = px.pie(
-    values=category_counts.values,
-    names=category_counts.index,
-    title="AQI Category Distribution"
-)
+                ]
 
-st.plotly_chart(
-    pie_fig,
-    width="stretch"
-)
+            }
 
-
-# ---------------------------
-# POLLUTION MAP
-# ---------------------------
-
-st.subheader("🗺 Air Quality Monitoring Stations")
-
-try:
-
-    stations = pd.read_csv(
-        "data/station_pollution_india.csv"
-    )
-
-    stations = stations[
-        stations["city"].str.contains(
-            selected_city,
-            case=False,
-            na=False
         )
+    )
+
+    gauge.update_layout(
+
+        paper_bgcolor="#102234",
+
+        font_color="white",
+
+        margin=dict(
+
+            l=20,
+
+            r=20,
+
+            t=60,
+
+            b=20
+
+        ),
+
+        height=420
+
+    )
+
+    st.plotly_chart(
+
+        gauge,
+
+        use_container_width=True
+
+    )
+
+# ============================================================
+# POLLUTANT PANEL
+# ============================================================
+
+with right:
+
+    st.markdown("### 🌫 Live Pollutants")
+
+    pollutants = [
+
+        ("PM2.5", air["pm2_5"], "μg/m³"),
+
+        ("PM10", air["pm10"], "μg/m³"),
+
+        ("NO₂", air["no2"], "μg/m³"),
+
+        ("SO₂", air["so2"], "μg/m³"),
+
+        ("CO", air["co"], "μg/m³"),
+
+        ("O₃", air["o3"], "μg/m³"),
+
+        ("NH₃", air["nh3"], "μg/m³")
+
     ]
 
-    city_coordinates = {
-        "Ahmedabad": [23.0225, 72.5714],
-        "Bengaluru": [12.9716, 77.5946],
-        "Bhopal": [23.2599, 77.4126],
-        "Bhubaneswar": [20.2961, 85.8245],
-        "Chandigarh": [30.7333, 76.7794],
-        "Chennai": [13.0827, 80.2707],
-        "Coimbatore": [11.0168, 76.9558],
-        "Delhi": [28.6139, 77.2090],
-        "Guwahati": [26.1445, 91.7362],
-        "Hyderabad": [17.3850, 78.4867],
-        "Indore": [22.7196, 75.8577],
-        "Jaipur": [26.9124, 75.7873],
-        "Kanpur": [26.4499, 80.3319],
-        "Kochi": [9.9312, 76.2673],
-        "Kolkata": [22.5726, 88.3639],
-        "Lucknow": [26.8467, 80.9462],
-        "Mumbai": [19.0760, 72.8777],
-        "Nagpur": [21.1458, 79.0882],
-        "Patna": [25.5941, 85.1376],
-        "Pune": [18.5204, 73.8567],
-        "Raipur": [21.2514, 81.6296],
-        "Ranchi": [23.3441, 85.3096],
-        "Surat": [21.1702, 72.8311],
-        "Thiruvananthapuram": [8.5241, 76.9366],
-        "Visakhapatnam": [17.6868, 83.2185]
-    }
+    for name, value, unit in pollutants:
 
-    m = folium.Map(
-        location=city_coordinates[selected_city],
-        zoom_start=10
+        st.markdown(f"""
+<div class="pollutant-box">
+
+<b>{name}</b>
+
+<h3>{value:.2f} {unit}</h3>
+
+</div>
+
+""", unsafe_allow_html=True)
+        
+# ============================================================
+# AI SUMMARY
+# ============================================================
+
+st.markdown("## 🤖 AI Environmental Summary")
+
+summary = []
+
+if current_aqi <= 50:
+
+    summary.append(
+        "Air quality is currently excellent."
     )
 
-    for _, row in stations.iterrows():
+elif current_aqi <= 100:
 
-        try:
-
-            lat = float(row["latitude"])
-            lon = float(row["longitude"])
-
-            folium.Marker(
-                [lat, lon],
-                popup=f"""
-                Station: {row['station']}<br>
-                Pollutant: {row['pollutant_id']}<br>
-                Average Value: {row['pollutant_avg']}
-                """
-            ).add_to(m)
-
-        except:
-            pass
-
-    st_folium(
-        m,
-        width=1000,
-        height=500
+    summary.append(
+        "Air quality is acceptable for most people."
     )
 
-except Exception as e:
-    st.warning(f"Map Error: {e}")
+elif current_aqi <= 150:
 
-# ---------------------------
-# DATA TABLE
-# ---------------------------
+    summary.append(
+        "Sensitive groups should limit outdoor exposure."
+    )
 
-st.subheader("🏆 Top 10 Worst Pollution Days")
+elif current_aqi <= 200:
 
-worst_days = df.nlargest(10, "aqi")
+    summary.append(
+        "Air pollution is high. Outdoor activity should be reduced."
+    )
 
-st.dataframe(
-    worst_days[["date", "aqi"]],
-    width="stretch"
+else:
+
+    summary.append(
+        "Very poor air quality detected. Stay indoors whenever possible."
+    )
+
+if weather["wind_speed"] < 2:
+
+    summary.append(
+        "Low wind speed may trap pollutants."
+    )
+
+if weather["humidity"] > 80:
+
+    summary.append(
+        "High humidity may increase discomfort."
+    )
+
+if weather["temperature"] > 35:
+
+    summary.append(
+        "High temperatures can worsen ozone formation."
+    )
+
+for item in summary:
+
+    st.info(item)
+    
+# ============================================================
+# PHASE 1F
+# AI FORECAST + HEALTH SCORE
+# ============================================================
+
+st.markdown(
+"""
+<div class="section-title">
+📈 AI Environmental Intelligence
+</div>
+
+<div class="section-description">
+Machine Learning powered forecast and environmental health assessment.
+</div>
+""",
+unsafe_allow_html=True
 )
 
+left, right = st.columns([2,1])
 
-st.subheader("📋 Recent AQI Records")
+# ============================================================
+# LEFT SIDE
+# FORECAST
+# ============================================================
 
-st.dataframe(
-    df.tail(10),
-    use_container_width=True
-)
+with left:
 
-# ---------------------------
-# FOOTER
-# ---------------------------
+    forecast = pd.DataFrame({
 
-st.success("✅ Dashboard Loaded Successfully")
+        "Day":[
+
+            "Today",
+
+            "Tomorrow",
+
+            "Day 3",
+
+            "Day 4",
+
+            "Day 5",
+
+            "Day 6",
+
+            "Day 7"
+
+        ],
+
+        "AQI":[
+
+            predicted_aqi,
+
+            predicted_aqi+4,
+
+            predicted_aqi+2,
+
+            predicted_aqi-3,
+
+            predicted_aqi-5,
+
+            predicted_aqi-2,
+
+            predicted_aqi+1
+
+        ]
+
+    })
+
+    fig = px.line(
+
+        forecast,
+
+        x="Day",
+
+        y="AQI",
+
+        markers=True,
+
+        title="7-Day AQI Forecast"
+
+    )
+
+    fig.update_layout(
+
+        paper_bgcolor="#102234",
+
+        plot_bgcolor="#102234",
+
+        font_color="white",
+
+        height=380,
+
+        margin=dict(
+
+            l=20,
+
+            r=20,
+
+            t=50,
+
+            b=20
+
+        )
+
+    )
+
+    st.plotly_chart(
+
+        fig,
+
+        use_container_width=True
+
+    )
+
+# ============================================================
+# RIGHT SIDE
+# ENVIRONMENT SCORE
+# ============================================================
+
+with right:
+
+    health_score = max(
+
+        0,
+
+        100-int(current_aqi/5)
+
+    )
+
+    score = go.Figure(
+
+        go.Indicator(
+
+            mode="gauge+number",
+
+            value=health_score,
+
+            title={
+
+                "text":"Health Score"
+
+            },
+
+            gauge={
+
+                "axis":{
+
+                    "range":[0,100]
+
+                },
+
+                "bar":{
+
+                    "color":"limegreen"
+
+                },
+
+                "steps":[
+
+                    {
+
+                        "range":[0,30],
+
+                        "color":"red"
+
+                    },
+
+                    {
+
+                        "range":[30,60],
+
+                        "color":"orange"
+
+                    },
+
+                    {
+
+                        "range":[60,80],
+
+                        "color":"yellow"
+
+                    },
+
+                    {
+
+                        "range":[80,100],
+
+                        "color":"green"
+
+                    }
+
+                ]
+
+            }
+
+        )
+
+    )
+
+    score.update_layout(
+
+        paper_bgcolor="#102234",
+
+        font_color="white",
+
+        height=380
+
+    )
+
+    st.plotly_chart(
+
+        score,
+
+        use_container_width=True
+
+    )
