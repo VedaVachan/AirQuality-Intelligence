@@ -10,70 +10,62 @@ from sklearn.metrics import (
 
 from xgboost import XGBRegressor
 
-# =====================================
+print("="*60)
+print("Loading Final Dataset...")
+print("="*60)
+
+# ==========================================
 # LOAD DATA
-# =====================================
+# ==========================================
 
 df = pd.read_csv("data/final_dataset.csv")
 
-print("=" * 60)
-print("Dataset Loaded")
-print("=" * 60)
-print(df.head())
+print("\nDataset Shape:", df.shape)
 
-# =====================================
+# ==========================================
 # DROP UNUSED COLUMNS
-# =====================================
+# ==========================================
 
-drop_columns = [
+X = df.drop(columns=[
+    "AQI",
     "Date",
     "AQI_Bucket"
-]
+])
 
-for col in drop_columns:
-    if col in df.columns:
-        df.drop(columns=col, inplace=True)
+y = df["AQI"]
 
-# =====================================
-# ENCODE CITY
-# =====================================
+# ==========================================
+# ONE HOT ENCODE CITY
+# ==========================================
 
-df = pd.get_dummies(
-    df,
+X = pd.get_dummies(
+    X,
     columns=["City"],
     drop_first=True
 )
 
-# =====================================
-# FEATURES & TARGET
-# =====================================
+print("\nFeature Matrix:", X.shape)
 
-X = df.drop(columns=["AQI"])
-
-y = df["AQI"]
-
-print("\nNumber of Features :", X.shape[1])
-
-# =====================================
+# ==========================================
 # TRAIN TEST SPLIT
-# =====================================
+# ==========================================
 
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
-    test_size=0.20,
+    test_size=0.2,
     random_state=42
 )
 
-print("\nTraining Samples :", len(X_train))
+print("Training Samples :", len(X_train))
 print("Testing Samples  :", len(X_test))
 
-# =====================================
+# ==========================================
 # MODEL
-# =====================================
+# ==========================================
 
 model = XGBRegressor(
-    n_estimators=400,
+    n_estimators=500,
     learning_rate=0.05,
     max_depth=8,
     subsample=0.8,
@@ -82,51 +74,46 @@ model = XGBRegressor(
     random_state=42
 )
 
-# =====================================
-# TRAIN
-# =====================================
-
 print("\nTraining Model...\n")
 
 model.fit(X_train, y_train)
 
 print("Training Completed!")
 
-# =====================================
-# PREDICT
-# =====================================
+# ==========================================
+# PREDICTION
+# ==========================================
 
-predictions = model.predict(X_test)
+pred = model.predict(X_test)
 
-# =====================================
-# EVALUATION
-# =====================================
+# ==========================================
+# METRICS
+# ==========================================
 
-mae = mean_absolute_error(y_test, predictions)
+mae = mean_absolute_error(y_test, pred)
 
 rmse = mean_squared_error(
     y_test,
-    predictions,
-    squared=False
-)
+    pred
+) ** 0.5
 
 r2 = r2_score(
     y_test,
-    predictions
+    pred
 )
 
 print("\n")
-print("=" * 60)
+print("="*60)
 print("MODEL PERFORMANCE")
-print("=" * 60)
+print("="*60)
 
 print(f"MAE  : {mae:.2f}")
 print(f"RMSE : {rmse:.2f}")
 print(f"R²   : {r2:.4f}")
 
-# =====================================
+# ==========================================
 # FEATURE IMPORTANCE
-# =====================================
+# ==========================================
 
 importance = pd.DataFrame({
     "Feature": X.columns,
@@ -138,21 +125,26 @@ importance = importance.sort_values(
     ascending=False
 )
 
-print("\nTop 20 Important Features\n")
+print("\nTop 20 Features\n")
 
 print(importance.head(20))
 
-# =====================================
+# ==========================================
 # SAVE MODEL
-# =====================================
+# ==========================================
+
+joblib.dump(model, "models/aqi_xgboost.pkl")
 
 joblib.dump(
-    model,
-    "models/aqi_xgboost.pkl"
+    X.columns.tolist(),
+    "models/model_features.pkl"
 )
 
 print("\n")
-print("=" * 60)
-print("Model Saved Successfully")
-print("Location : models/aqi_xgboost.pkl")
-print("=" * 60)
+print("="*60)
+print("MODEL SAVED SUCCESSFULLY")
+print("="*60)
+
+print("Saved:")
+print("models/aqi_xgboost.pkl")
+print("models/model_features.pkl")
