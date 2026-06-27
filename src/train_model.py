@@ -1,9 +1,6 @@
-import os
-import joblib
-import numpy as np
 import pandas as pd
+import joblib
 
-from xgboost import XGBRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     mean_absolute_error,
@@ -11,81 +8,151 @@ from sklearn.metrics import (
     r2_score
 )
 
-print("Loading dataset...")
+from xgboost import XGBRegressor
 
-# Load dataset
+# =====================================
+# LOAD DATA
+# =====================================
+
 df = pd.read_csv("data/final_dataset.csv")
 
-print("Dataset Shape:", df.shape)
+print("=" * 60)
+print("Dataset Loaded")
+print("=" * 60)
+print(df.head())
 
-# Features
-X = df[
-    [
-        "temperature",
-        "rainfall",
-        "wind_speed",
-        "month",
-        "day_of_year",
-        "aqi_lag1",
-        "aqi_7day_avg"
-    ]
+# =====================================
+# DROP UNUSED COLUMNS
+# =====================================
+
+drop_columns = [
+    "Date",
+    "AQI_Bucket"
 ]
 
-# Target
-y = df["aqi"]
+for col in drop_columns:
+    if col in df.columns:
+        df.drop(columns=col, inplace=True)
 
-print("Feature Shape:", X.shape)
+# =====================================
+# ENCODE CITY
+# =====================================
 
-# Train/Test Split
+df = pd.get_dummies(
+    df,
+    columns=["City"],
+    drop_first=True
+)
+
+# =====================================
+# FEATURES & TARGET
+# =====================================
+
+X = df.drop(columns=["AQI"])
+
+y = df["AQI"]
+
+print("\nNumber of Features :", X.shape[1])
+
+# =====================================
+# TRAIN TEST SPLIT
+# =====================================
+
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
-    test_size=0.2,
+    test_size=0.20,
     random_state=42
 )
 
-print("Training Samples:", len(X_train))
-print("Testing Samples :", len(X_test))
+print("\nTraining Samples :", len(X_train))
+print("Testing Samples  :", len(X_test))
 
-# XGBoost Model
+# =====================================
+# MODEL
+# =====================================
+
 model = XGBRegressor(
-    n_estimators=300,
-    max_depth=6,
+    n_estimators=400,
     learning_rate=0.05,
+    max_depth=8,
     subsample=0.8,
     colsample_bytree=0.8,
-    random_state=42,
-    objective="reg:squarederror"
+    objective="reg:squarederror",
+    random_state=42
 )
 
-print("\nTraining Model...")
+# =====================================
+# TRAIN
+# =====================================
 
-# Train
+print("\nTraining Model...\n")
+
 model.fit(X_train, y_train)
 
 print("Training Completed!")
 
-# Predictions
-preds = model.predict(X_test)
+# =====================================
+# PREDICT
+# =====================================
 
-# Metrics
-mae = mean_absolute_error(y_test, preds)
-rmse = np.sqrt(mean_squared_error(y_test, preds))
-r2 = r2_score(y_test, preds)
+predictions = model.predict(X_test)
 
-print("\n========== MODEL RESULTS ==========")
-print("MAE :", round(mae, 2))
-print("RMSE:", round(rmse, 2))
-print("R2  :", round(r2, 4))
-print("===================================")
+# =====================================
+# EVALUATION
+# =====================================
 
-# Create models folder automatically
-os.makedirs("models", exist_ok=True)
+mae = mean_absolute_error(y_test, predictions)
 
-# Save model
-model_path = "models/aqi_xgboost.pkl"
+rmse = mean_squared_error(
+    y_test,
+    predictions,
+    squared=False
+)
 
-joblib.dump(model, model_path)
+r2 = r2_score(
+    y_test,
+    predictions
+)
 
-print("\nModel Saved Successfully!")
-print("Location:", model_path)
+print("\n")
+print("=" * 60)
+print("MODEL PERFORMANCE")
+print("=" * 60)
+
+print(f"MAE  : {mae:.2f}")
+print(f"RMSE : {rmse:.2f}")
+print(f"R²   : {r2:.4f}")
+
+# =====================================
+# FEATURE IMPORTANCE
+# =====================================
+
+importance = pd.DataFrame({
+    "Feature": X.columns,
+    "Importance": model.feature_importances_
+})
+
+importance = importance.sort_values(
+    by="Importance",
+    ascending=False
+)
+
+print("\nTop 20 Important Features\n")
+
+print(importance.head(20))
+
+# =====================================
+# SAVE MODEL
+# =====================================
+
+joblib.dump(
+    model,
+    "models/aqi_xgboost.pkl"
+)
+
+print("\n")
+print("=" * 60)
+print("Model Saved Successfully")
+print("Location : models/aqi_xgboost.pkl")
+print("=" * 60)
