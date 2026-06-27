@@ -4,7 +4,7 @@ import pandas as pd
 # Load Dataset
 # ==========================================
 
-df = pd.read_excel("data/india_aqi_weather_2015_2024.xlsx")
+df = pd.read_excel("data/india_aqi_weather_2015_2024.csv")
 
 print("Original Shape:", df.shape)
 
