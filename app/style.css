@@ -1,990 +1,240 @@
-/* ============================================================
-   GOOGLE FONT
-============================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-/* ============================================================
-   GLOBAL
-============================================================ */
+/* ===== GENERAL ===== */
 
 html,
 body,
 [class*="css"] {
-
-    font-family: "Inter", sans-serif;
-
+    background: #0b1726;
+    color: #ffffff;
+    font-family: "Segoe UI", sans-serif;
 }
-
-/* ============================================================
-   BACKGROUND
-============================================================ */
-
-.stApp {
-
-    background: linear-gradient(135deg,
-            #071126 0%,
-            #0D1B2A 35%,
-            #13293D 100%);
-
-    color: white;
-
-}
-
-/* ============================================================
-   HIDE STREAMLIT
-============================================================ */
-
-#MainMenu {
-
-    visibility: hidden;
-
-}
-
-header {
-
-    visibility: hidden;
-
-}
-
-footer {
-
-    visibility: hidden;
-
-}
-
-/* ============================================================
-   REMOVE TOP PADDING
-============================================================ */
 
 .block-container {
-
-    padding-top: 1.2rem;
-
+    padding-top: 2rem;
     padding-bottom: 2rem;
-
-    padding-left: 2rem;
-
-    padding-right: 2rem;
-
+    max-width: 95%;
 }
 
-/* ============================================================
-   SCROLL BAR
-============================================================ */
+/* ===== HEADER ===== */
 
-::-webkit-scrollbar {
+.dashboard-header {
 
-    width: 10px;
+    background: linear-gradient(135deg, #16283d, #102234);
 
+    border-radius: 22px;
+
+    padding: 30px;
+
+    margin-bottom: 30px;
+
+    box-shadow: 0 8px 25px rgba(0, 0, 0, .35);
 }
 
-::-webkit-scrollbar-track {
+.dashboard-title {
 
-    background: #08131F;
-
-}
-
-::-webkit-scrollbar-thumb {
-
-    background: #2B5876;
-
-    border-radius: 50px;
-
-}
-
-::-webkit-scrollbar-thumb:hover {
-
-    background: #4E7DA7;
-
-}
-
-/* ============================================================
-   TITLES
-============================================================ */
-
-h1 {
-
-    color: white;
+    font-size: 46px;
 
     font-weight: 700;
 
-    font-size: 38px;
-
-}
-
-h2 {
-
     color: white;
 
-    font-weight: 600;
-
+    margin-bottom: 8px;
 }
 
-h3 {
+.dashboard-subtitle {
+
+    font-size: 20px;
+
+    color: #b8c7d9;
+}
+
+/* ===== SECTION ===== */
+
+.section-title {
+
+    font-size: 34px;
+
+    font-weight: 700;
 
     color: white;
-
-    font-weight: 600;
-
-}
-
-p {
-
-    color: #CBD5E1;
-
-}
-
-/* ============================================================
-   DIVIDER
-============================================================ */
-
-hr {
-
-    border: none;
-
-    height: 1px;
-
-    background: #24384B;
 
     margin-top: 20px;
 
-    margin-bottom: 20px;
-
+    margin-bottom: 10px;
 }
 
-/* ============================================================
-   LINKS
-============================================================ */
+.section-description {
 
-a {
+    color: #9eb0c5;
 
-    color: #55C2FF;
+    font-size: 18px;
 
-    text-decoration: none;
-
+    margin-bottom: 25px;
 }
 
-a:hover {
-
-    color: white;
-
-}
-
-/* ============================================================
-   SIDEBAR
-============================================================ */
-
-section[data-testid="stSidebar"] {
-
-    background: #08131F;
-
-    border-right: 1px solid #223547;
-
-}
-
-/* ============================================================
-   SELECTBOX
-============================================================ */
-
-.stSelectbox {
-
-    color: white;
-
-}
-
-/* ============================================================
-   METRIC LABELS
-============================================================ */
-
-[data-testid="stMetricLabel"] {
-
-    color: #A8B7C7;
-
-}
-
-/* ============================================================
-   METRIC VALUES
-============================================================ */
-
-[data-testid="stMetricValue"] {
-
-    color: white;
-
-    font-size: 32px;
-
-    font-weight: 700;
-
-}
-
-/* ============================================================
-   DATAFRAME
-============================================================ */
-
-[data-testid="stDataFrame"] {
-
-    border-radius: 18px;
-
-    overflow: hidden;
-
-}
-
-/* ============================================================
-   SUCCESS
-============================================================ */
-
-div[data-baseweb="notification"] {
-
-    border-radius: 15px;
-
-}
-
-/* ============================================================
-   GLASS CONTAINERS
-============================================================ */
-
-.glass {
-
-    background: rgba(255, 255, 255, 0.05);
-
-    backdrop-filter: blur(15px);
-
-    border: 1px solid rgba(255, 255, 255, 0.08);
-
-    border-radius: 20px;
-
-    padding: 20px;
-
-    box-shadow:
-
-        0px 8px 30px rgba(0, 0, 0, 0.25);
-
-    transition: 0.35s;
-
-}
-
-.glass:hover {
-
-    transform: translateY(-4px);
-
-    box-shadow:
-
-        0px 18px 40px rgba(0, 0, 0, 0.35);
-
-}
-
-/* ============================================================
-   KPI CARDS
-============================================================ */
+/* ===== KPI CARD ===== */
 
 .kpi-card {
 
-    background: linear-gradient(145deg,
-
-            rgba(20, 40, 65, 0.95),
-
-            rgba(12, 25, 42, 0.95));
+    background: #14263d;
 
     border-radius: 20px;
 
-    padding: 22px;
+    padding: 25px;
 
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
 
-    transition: .35s;
+    border: 1px solid rgba(255, 255, 255, .08);
 
-    box-shadow:
+    transition: .3s;
 
-        0 12px 35px rgba(0, 0, 0, .28);
-
+    min-height: 200px;
 }
 
 .kpi-card:hover {
 
     transform: translateY(-6px);
 
-    border-color: #35D0FF;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, .4);
 
-    box-shadow:
-
-        0 20px 45px rgba(53, 208, 255, .18);
-
+    border: 1px solid #3fa9f5;
 }
-
-/* ============================================================
-   SECTION CARDS
-============================================================ */
-
-.section-card {
-
-    background: #132338;
-
-    border-radius: 22px;
-
-    padding: 22px;
-
-    margin-bottom: 20px;
-
-    border: 1px solid rgba(255, 255, 255, .06);
-
-}
-
-/* ============================================================
-   CARD TITLES
-============================================================ */
-
-.card-title {
-
-    color: white;
-
-    font-size: 22px;
-
-    font-weight: 700;
-
-    margin-bottom: 15px;
-
-}
-
-.card-subtitle {
-
-    color: #9FB3C8;
-
-    font-size: 14px;
-
-    margin-bottom: 18px;
-
-}
-
-/* ============================================================
-   KPI ICON
-============================================================ */
 
 .metric-icon {
 
     font-size: 42px;
 
-    margin-bottom: 8px;
-
+    margin-bottom: 18px;
 }
 
-/* ============================================================
-   AQI COLORS
-============================================================ */
+.card-subtitle {
 
-.good {
+    color: #9eb0c5;
 
-    color: #2ECC71;
+    font-size: 18px;
 
+    margin-bottom: 12px;
 }
 
-.moderate {
-
-    color: #F1C40F;
-
-}
-
-.poor {
-
-    color: #F39C12;
-
-}
-
-.severe {
-
-    color: #E74C3C;
-
-}
-
-.hazard {
-
-    color: #8E44AD;
-
-}
-
-/* ============================================================
-   BUTTONS
-============================================================ */
-
-.stButton>button {
-
-    width: 100%;
-
-    border: none;
-
-    border-radius: 14px;
-
-    background: linear-gradient(90deg,
-
-            #1A73E8,
-
-            #00C2FF);
+.kpi-card h2 {
 
     color: white;
 
-    font-size: 16px;
+    font-size: 48px;
 
-    font-weight: 600;
+    margin: 0;
+}
 
-    padding: 12px;
+/* ===== POLLUTANT ===== */
+
+.pollutant-box {
+
+    background: #14263d;
+
+    border-radius: 18px;
+
+    padding: 20px;
+
+    margin-bottom: 18px;
+
+    border: 1px solid rgba(255, 255, 255, .08);
 
     transition: .3s;
+}
 
+.pollutant-box:hover {
+
+    border-color: #4db8ff;
+
+    transform: translateY(-4px);
+}
+
+.pollutant-box b {
+
+    color: #b8c7d9;
+
+    font-size: 18px;
+}
+
+.pollutant-box h3 {
+
+    color: white;
+
+    font-size: 34px;
+
+    margin-top: 15px;
+}
+
+/* ===== METRIC ===== */
+
+[data-testid="stMetric"] {
+
+    background: #14263d;
+
+    border-radius: 18px;
+
+    padding: 18px;
+
+    border: 1px solid rgba(255, 255, 255, .08);
+}
+
+/* ===== PLOTLY ===== */
+
+.js-plotly-plot {
+
+    border-radius: 20px;
+
+    overflow: hidden;
+}
+
+/* ===== BUTTON ===== */
+
+.stButton>button {
+
+    background: #1f6feb;
+
+    color: white;
+
+    border: none;
+
+    border-radius: 12px;
+
+    padding: 12px 25px;
+
+    transition: .3s;
 }
 
 .stButton>button:hover {
 
-    transform: translateY(-2px);
-
-    box-shadow:
-
-        0 12px 25px rgba(0, 194, 255, .35);
-
+    background: #2f81f7;
 }
 
-/* ============================================================
-   DOWNLOAD BUTTON
-============================================================ */
-
-.stDownloadButton>button {
-
-    width: 100%;
-
-    border-radius: 14px;
-
-    background: #1B5E20;
-
-    color: white;
-
-    border: none;
-
-    padding: 12px;
-
-    font-weight: 600;
-
-}
-
-.stDownloadButton>button:hover {
-
-    background: #2E7D32;
-
-}
-
-/* ============================================================
-   PROGRESS BAR
-============================================================ */
-
-.stProgress>div>div>div {
-
-    background:
-
-        linear-gradient(90deg,
-
-            #00C6FF,
-
-            #00E676);
-
-}
-
-/* ============================================================
-   ALERT BOXES
-============================================================ */
+/* ===== ALERT ===== */
 
 .stAlert {
 
-    border-radius: 18px;
-
+    border-radius: 16px;
 }
 
-/* ============================================================
-   PLOTLY CHARTS
-============================================================ */
-
-.js-plotly-plot {
-
-    border-radius: 22px;
-
-    overflow: hidden;
-
-}
-
-/* ============================================================
-   SHADOW UTILITIES
-============================================================ */
-
-.shadow-small {
-
-    box-shadow:
-
-        0 6px 18px rgba(0, 0, 0, .18);
-
-}
-
-.shadow-medium {
-
-    box-shadow:
-
-        0 12px 30px rgba(0, 0, 0, .25);
-
-}
-
-.shadow-large {
-
-    box-shadow:
-
-        0 20px 45px rgba(0, 0, 0, .35);
-
-}
-
-/* ============================================================
-   HOVER EFFECTS
-============================================================ */
-
-.hover-scale {
-
-    transition: .3s;
-
-}
-
-.hover-scale:hover {
-
-    transform: scale(1.02);
-
-}
-
-/* ============================================================
-   STATUS BADGES
-============================================================ */
-
-.badge {
-
-    display: inline-block;
-
-    padding: 6px 14px;
-
-    border-radius: 30px;
-
-    font-size: 13px;
-
-    font-weight: 600;
-
-}
-
-.badge-green {
-
-    background: #123C2F;
-
-    color: #2ECC71;
-
-}
-
-.badge-yellow {
-
-    background: #4A430F;
-
-    color: #FFD54F;
-
-}
-
-.badge-orange {
-
-    background: #5A3410;
-
-    color: #FFB74D;
-
-}
-
-.badge-red {
-
-    background: #4D1818;
-
-    color: #FF6B6B;
-
-}
-
-/* ============================================================
-   FADE ANIMATION
-============================================================ */
+/* ===== ANIMATION ===== */
 
 .fade-in {
 
-    animation: fadein .7s ease;
-
+    animation: fadeIn .7s ease;
 }
 
-@keyframes fadein {
+@keyframes fadeIn {
 
     from {
 
         opacity: 0;
 
-        transform: translateY(18px);
-
+        transform: translateY(12px);
     }
 
     to {
 
         opacity: 1;
 
-        transform: translateY(0px);
-
+        transform: translateY(0);
     }
-
-}
-
-/* ============================================================
-   DASHBOARD HEADER
-============================================================ */
-
-.dashboard-header {
-
-    background: linear-gradient(135deg,
-            rgba(18, 36, 58, .98),
-            rgba(10, 22, 36, .98));
-
-    border-radius: 24px;
-
-    padding: 28px;
-
-    margin-bottom: 25px;
-
-    border: 1px solid rgba(255, 255, 255, .08);
-
-    box-shadow: 0 15px 40px rgba(0, 0, 0, .30);
-
-}
-
-.dashboard-title {
-
-    color: white;
-
-    font-size: 38px;
-
-    font-weight: 700;
-
-    margin-bottom: 8px;
-
-}
-
-.dashboard-subtitle {
-
-    color: #AFC3D8;
-
-    font-size: 17px;
-
-}
-
-/* ============================================================
-   SECTION TITLES
-============================================================ */
-
-.section-title {
-
-    color: white;
-
-    font-size: 26px;
-
-    font-weight: 700;
-
-    margin-top: 15px;
-
-    margin-bottom: 15px;
-
-}
-
-.section-description {
-
-    color: #9FB3C8;
-
-    font-size: 15px;
-
-    margin-bottom: 18px;
-
-}
-
-/* ============================================================
-   CHART CONTAINERS
-============================================================ */
-
-.chart-card {
-
-    background: #102234;
-
-    border-radius: 22px;
-
-    padding: 20px;
-
-    border: 1px solid rgba(255, 255, 255, .06);
-
-    box-shadow: 0 12px 35px rgba(0, 0, 0, .25);
-
-    margin-bottom: 20px;
-
-}
-
-/* ============================================================
-   AQI GAUGE
-============================================================ */
-
-.gauge-card {
-
-    background: linear-gradient(180deg,
-            #102234,
-            #0A1728);
-
-    border-radius: 24px;
-
-    padding: 25px;
-
-    border: 1px solid rgba(255, 255, 255, .08);
-
-    min-height: 420px;
-
-}
-
-/* ============================================================
-   FORECAST CARD
-============================================================ */
-
-.forecast-card {
-
-    background: linear-gradient(180deg,
-            #11253A,
-            #091827);
-
-    border-radius: 22px;
-
-    padding: 20px;
-
-    border: 1px solid rgba(255, 255, 255, .08);
-
-}
-
-/* ============================================================
-   MAP CARD
-============================================================ */
-
-.map-card {
-
-    border-radius: 22px;
-
-    overflow: hidden;
-
-    border: 1px solid rgba(255, 255, 255, .08);
-
-    box-shadow: 0 15px 35px rgba(0, 0, 0, .28);
-
-}
-
-/* ============================================================
-   INFO PANELS
-============================================================ */
-
-.info-card {
-
-    background: #122338;
-
-    border-left: 5px solid #00C2FF;
-
-    padding: 18px;
-
-    border-radius: 18px;
-
-    margin-bottom: 18px;
-
-}
-
-/* ============================================================
-   CITY BADGE
-============================================================ */
-
-.city-chip {
-
-    display: inline-block;
-
-    padding: 8px 18px;
-
-    border-radius: 30px;
-
-    background: #16314A;
-
-    color: white;
-
-    font-size: 15px;
-
-    font-weight: 600;
-
-}
-
-/* ============================================================
-   POLLUTANT BOX
-============================================================ */
-
-.pollutant-box {
-
-    background: #0E1C2D;
-
-    border-radius: 18px;
-
-    padding: 15px;
-
-    margin-bottom: 12px;
-
-    border: 1px solid rgba(255, 255, 255, .05);
-
-}
-
-/* ============================================================
-   REPORT BOX
-============================================================ */
-
-.report-box {
-
-    background: #102235;
-
-    border-radius: 18px;
-
-    padding: 20px;
-
-    border: 1px solid rgba(255, 255, 255, .06);
-
-}
-
-/* ============================================================
-   FOOTER
-============================================================ */
-
-.footer {
-
-    margin-top: 40px;
-
-    padding: 20px;
-
-    border-top: 1px solid rgba(255, 255, 255, .08);
-
-    text-align: center;
-
-    color: #8FA8BD;
-
-    font-size: 14px;
-
-}
-
-/* ============================================================
-   RESPONSIVE
-============================================================ */
-
-@media(max-width:1200px) {
-
-    .dashboard-title {
-
-        font-size: 30px;
-
-    }
-
-    .section-title {
-
-        font-size: 22px;
-
-    }
-
-}
-
-@media(max-width:992px) {
-
-    .block-container {
-
-        padding-left: 1rem;
-
-        padding-right: 1rem;
-
-    }
-
-    .dashboard-header {
-
-        padding: 20px;
-
-    }
-
-    .gauge-card {
-
-        min-height: 300px;
-
-    }
-
-}
-
-@media(max-width:768px) {
-
-    .dashboard-title {
-
-        font-size: 26px;
-
-    }
-
-    .dashboard-subtitle {
-
-        font-size: 15px;
-
-    }
-
-    .section-title {
-
-        font-size: 20px;
-
-    }
-
-    .kpi-card {
-
-        padding: 18px;
-
-    }
-
-    .chart-card {
-
-        padding: 16px;
-
-    }
-
-}
-
-/* ============================================================
-   LOADING EFFECT
-============================================================ */
-
-.loading {
-
-    animation: pulse 1.6s infinite;
-
-}
-
-@keyframes pulse {
-
-    0% {
-
-        opacity: .55;
-
-    }
-
-    50% {
-
-        opacity: 1;
-
-    }
-
-    100% {
-
-        opacity: .55;
-
-    }
-
-}
-
-/* ============================================================
-   SMOOTH SCROLL
-============================================================ */
-
-html {
-
-    scroll-behavior: smooth;
-
 }

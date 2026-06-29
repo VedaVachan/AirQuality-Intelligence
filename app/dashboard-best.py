@@ -45,6 +45,18 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 
 )
+# ============================================================
+# LOAD CSS
+# ============================================================
+
+def load_css():
+    with open("app/style.css") as f:
+        st.markdown(
+            f"<style>{f.read()}</style>",
+            unsafe_allow_html=True
+        )
+
+load_css()
 
 # ============================================================
 # REMOVE DEFAULT STREAMLIT STYLE
@@ -194,17 +206,11 @@ def load_live_data(city):
 
 def get_prediction(city_df):
 
-    latest = city_df.iloc[-1]
+    latest = city_df.iloc[-1:].copy() 
 
     prediction = predict_aqi(
-
-        latest,
-
-        model,
-
-        model_features
-
-    )
+        
+        latest,model,model_features)
 
     return prediction
 
@@ -941,3 +947,113 @@ with right:
         use_container_width=True
 
     )
+
+# ============================================================
+# ENVIRONMENT SUMMARY
+# ============================================================
+
+st.markdown("## 🌍 Environmental Summary")
+
+c1,c2,c3,c4 = st.columns(4)
+
+with c1:
+
+    st.metric(
+
+        "Prediction",
+
+        f"{predicted_aqi:.0f}"
+
+    )
+
+with c2:
+
+    st.metric(
+
+        "Air Quality",
+
+        get_aqi_status(
+
+            air["aqi"]
+
+        )
+
+    )
+
+with c3:
+
+    st.metric(
+
+        "Condition",
+
+        weather["condition"]
+
+    )
+
+with c4:
+
+    st.metric(
+
+        "Wind",
+
+        f"{weather['wind_speed']} m/s"
+
+    )
+    
+# ============================================================
+# AI RECOMMENDATION
+# ============================================================
+
+st.markdown("## 🧠 AI Recommendation")
+
+if current_aqi <= 50:
+
+    st.success(
+
+        "Excellent environmental conditions. Outdoor activities are encouraged."
+
+    )
+
+elif current_aqi <= 100:
+
+    st.info(
+
+        "Moderate air quality. Suitable for most outdoor activities."
+
+    )
+
+elif current_aqi <= 150:
+
+    st.warning(
+
+        "Air pollution is increasing. Sensitive individuals should take precautions."
+
+    )
+
+elif current_aqi <= 200:
+
+    st.error(
+
+        "Poor air quality detected. Outdoor exposure should be minimized."
+
+    )
+
+else:
+
+    st.error(
+
+        "Very Poor air quality. Emergency health precautions recommended."
+
+    )
+    
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown("---")
+
+st.caption(
+
+    "🌍 AI-Powered Urban Air Quality Intelligence Platform | Built using Streamlit, XGBoost, OpenWeather API and Machine Learning"
+
+)
