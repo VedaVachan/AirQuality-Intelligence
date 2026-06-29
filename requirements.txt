@@ -9,3 +9,4 @@ xgboost
 requests
 numpy
 matplotlib
+scipy

@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 import folium
 from streamlit_folium import st_folium
 from datetime import datetime
+from textwrap import dedent
 
 # ------------------------------------------------------------
 # PROJECT MODULES
@@ -215,94 +216,103 @@ def get_prediction(city_df):
     return prediction
 
 # ============================================================
-# LOAD CITY
+# PHASE 2A
+# PREMIUM TOP BAR
 # ============================================================
-
-selected_city = DEFAULT_CITY
-
-city_df = get_city_history(
-
-    selected_city
-
-)
-
-weather, air = load_live_data(
-
-    selected_city
-
-)
-
-predicted_aqi = get_prediction(
-
-    city_df
-
-)
-
-current_aqi = convert_api_aqi(
-
-    air["aqi"]
-
-)
-
-current_time = datetime.now()
-
-# ============================================================
-# PHASE 1A COMPLETED
-# ============================================================
-
-# ============================================================
-# PHASE 1C
-# DASHBOARD HEADER
-# ============================================================
-
-# -----------------------------
-# HEADER CONTAINER
-# -----------------------------
 
 st.markdown(
 """
-<div class="dashboard-header">
+<div class="topbar">
 
-<div class="dashboard-title">
-🌍 AI-Powered Urban Air Quality Intelligence
-</div>
+    <div class="topbar-left">
 
-<div class="dashboard-subtitle">
-Smart City Environmental Intelligence Platform
-</div>
+        <div class="logo-box">
+            🏢
+        </div>
+
+        <div>
+
+            <div class="main-title">
+                AI-Powered Urban Air Quality Intelligence
+            </div>
+
+            <div class="sub-title">
+                Smart City Intervention & Public Health Protection
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 """,
 unsafe_allow_html=True
 )
 
-# -----------------------------
-# HEADER INFORMATION
-# -----------------------------
+st.markdown("<br>", unsafe_allow_html=True)
 
-left, center, right = st.columns([3,2,2])
+col1, col2, col3, col4 = st.columns([2.2,1.3,1.3,1.6])
 
-# -----------------------------
-# LAST UPDATED
-# -----------------------------
+with col1:
 
-with left:
+    st.markdown(
+    f"""
+    <div class="info-card">
 
-    st.markdown("#### 📅 Last Updated")
+        <div class="info-label">
+            ⏱ Last Updated
+        </div>
 
-    st.info(
-        current_time.strftime(
-            "%d %B %Y | %I:%M %p"
-        )
+        <div class="info-value">
+            {current_time.strftime("%d %b %Y")}
+        </div>
+
+        <div class="info-small">
+            {current_time.strftime("%I:%M %p")}
+        </div>
+
+    </div>
+    """,
+    unsafe_allow_html=True
     )
 
-# -----------------------------
-# CITY SELECTOR
-# -----------------------------
+with col2:
 
-with center:
+    st.markdown(
+    """
+    <div class="info-card">
 
-    st.markdown("#### 📍 Select City")
+        <div class="info-label">
+            📦 Data Source
+        </div>
+
+        <div class="info-value">
+            CPCB
+        </div>
+
+        <div class="info-small">
+            OpenWeather
+        </div>
+
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
+
+with col3:
+
+    st.markdown(
+    """
+    <div class="live-card">
+
+        🟢 LIVE
+
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
+
+with col4:
 
     selected_city = st.selectbox(
 
@@ -316,43 +326,31 @@ with center:
 
     )
 
-# -----------------------------
-# LIVE STATUS
-# -----------------------------
-
-with right:
-
-    st.markdown("#### 📡 System Status")
-
-    st.success("🟢 LIVE")
+st.markdown("<hr>", unsafe_allow_html=True)
 
 # ============================================================
-# LOAD CITY AFTER SELECTION
+# LOAD CITY
 # ============================================================
 
-city_df = get_city_history(
+city_df = get_city_history(selected_city)
 
-    selected_city
+weather, air = load_live_data(selected_city)
 
-)
+predicted_aqi = get_prediction(city_df)
 
-weather, air = load_live_data(
+current_aqi = convert_api_aqi(air["aqi"])
 
-    selected_city
+# ============================================================
+# LOAD DATA AFTER CITY SELECTION
+# ============================================================
 
-)
+city_df = get_city_history(selected_city)
 
-predicted_aqi = get_prediction(
+weather, air = load_live_data(selected_city)
 
-    city_df
+predicted_aqi = get_prediction(city_df)
 
-)
-
-current_aqi = convert_api_aqi(
-
-    air["aqi"]
-
-)
+current_aqi = convert_api_aqi(air["aqi"])
 
 st.markdown("---")
 
