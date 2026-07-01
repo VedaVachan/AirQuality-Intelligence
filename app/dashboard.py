@@ -11,7 +11,7 @@ from utils.constants import DEFAULT_CITY
 
 from components.header import render_header
 from components.weather_cards import render_weather_cards
-from components.live_aqi_panel import render_live_aqi_panel
+from components.live_aqi_panel import render_live_aqi
 from components.india_map import render_india_map
 from components.forecast_panel import render_forecast_panel
 from components.alert_panel import render_alert_panel
@@ -164,7 +164,7 @@ left, center, right = st.columns(
 
 with left:
 
-    render_live_aqi_panel(
+    render_live_aqi(
         current_aqi,
         pollutants,
     )

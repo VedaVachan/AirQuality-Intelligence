@@ -2,137 +2,190 @@ import streamlit as st
 import plotly.graph_objects as go
 
 
-def render_live_aqi_panel(aqi, pollutants):
+def render_live_aqi(aqi, pollutant):
 
-    # ---------- AQI STATUS ----------
+    # -------------------------
+    # AQI Category
+    # -------------------------
+
     if aqi <= 50:
         status = "Good"
-        color = "#2ECC71"
+        color = "#4ADE80"
 
     elif aqi <= 100:
         status = "Moderate"
-        color = "#F1C40F"
+        color = "#FACC15"
+
+    elif aqi <= 150:
+        status = "Unhealthy for Sensitive"
+        color = "#FB923C"
 
     elif aqi <= 200:
-        status = "Unhealthy for Sensitive Groups"
-        color = "#F39C12"
+        status = "Unhealthy"
+        color = "#EF4444"
 
     elif aqi <= 300:
         status = "Very Unhealthy"
-        color = "#E74C3C"
+        color = "#A855F7"
 
     else:
         status = "Hazardous"
-        color = "#8E44AD"
+        color = "#7E22CE"
 
-    # ---------- TITLE ----------
-    st.subheader("🌍 Live Air Quality")
+    # -------------------------
+    # Title
+    # -------------------------
 
-    col1, col2 = st.columns([1.2, 1])
+    st.markdown("""
+    <h3 style="
+        color:white;
+        margin-bottom:12px;
+        font-size:22px;
+        font-weight:700;
+    ">
+    🌿 Live Air Quality
+    </h3>
+    """, unsafe_allow_html=True)
 
-    # =====================================================
-    # LEFT SIDE
-    # =====================================================
-    with col1:
+    # -------------------------
+    # Gauge
+    # -------------------------
 
-        fig = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=aqi,
+    fig = go.Figure(go.Indicator(
 
-            number={
-                "font": {
-                    "size": 46,
-                    "color": "white"
-                }
+        mode="gauge+number",
+
+        value=aqi,
+
+        number={
+            "font": {
+                "size": 54,
+                "color": color
+            }
+        },
+
+        gauge={
+
+            "axis": {
+                "range": [0, 500],
+                "tickwidth": 1,
+                "tickcolor": "#64748B"
             },
 
-            gauge={
-                "axis": {
-                    "range": [0, 500]
-                },
+            "bar": {
+                "color": color,
+                "thickness": 0.32
+            },
 
-                "bar": {
-                    "color": color,
-                    "thickness": 0.35
-                },
+            "bgcolor": "#1E293B",
 
-                "steps": [
-                    {"range": [0, 50], "color": "#2ECC71"},
-                    {"range": [50, 100], "color": "#F1C40F"},
-                    {"range": [100, 200], "color": "#F39C12"},
-                    {"range": [200, 300], "color": "#E74C3C"},
-                    {"range": [300, 500], "color": "#8E44AD"},
-                ],
+            "borderwidth": 0,
 
-                "bgcolor": "#172338",
+            "steps": [
 
-                "borderwidth": 0,
-            }
-        ))
+                {"range":[0,50],"color":"#22C55E"},
+                {"range":[50,100],"color":"#EAB308"},
+                {"range":[100,200],"color":"#F97316"},
+                {"range":[200,300],"color":"#EF4444"},
+                {"range":[300,500],"color":"#A855F7"}
 
-        fig.update_layout(
-
-            height=350,
-
-            paper_bgcolor="#172338",
-
-            plot_bgcolor="#172338",
-
-            margin=dict(l=15, r=15, t=20, b=15),
-
-            font=dict(color="white")
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-            config={"displayModeBar": False}
-        )
-
-        st.markdown(
-    f"### Status: <span style='color:{color}'>{status}</span>",
-    unsafe_allow_html=True
-)
-
-    # =====================================================
-    # RIGHT SIDE
-    # =====================================================
-
-    with col2:
-
-        st.subheader("📊 AQI Summary")
-
-        st.metric("Current AQI", int(aqi))
-
-        st.metric("Primary Pollutant", "PM2.5")
-
-        st.metric("Health Risk", status)
-
-        st.divider()
-
-        st.subheader("🌫 Pollutants")
-
-        names = {
-            "pm2_5": "PM2.5",
-            "pm10": "PM10",
-            "no2": "NO₂",
-            "so2": "SO₂",
-            "co": "CO",
-            "o3": "O₃"
+            ]
         }
+    ))
 
-        for key, label in names.items():
+    fig.update_layout(
 
-            value = pollutants.get(key, "--")
+        height=260,
 
-            c1, c2 = st.columns([2, 1])
+        margin=dict(l=10,r=10,t=20,b=10),
 
-            c1.write(label)
+        paper_bgcolor="#162235",
 
-            c2.write(value)
+        font=dict(color="white")
 
-        st.divider()
+    )
 
-        st.progress(min(aqi / 500, 1.0))
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={"displayModeBar":False}
+    )
 
-        st.caption(status)
+    # -------------------------
+    # Status
+    # -------------------------
+
+    st.markdown(f"""
+    <div style="
+        text-align:center;
+        margin-top:-5px;
+        margin-bottom:15px;
+    ">
+
+    <div style="
+        color:{color};
+        font-size:34px;
+        font-weight:800;
+    ">
+    {status}
+    </div>
+
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -------------------------
+    # Pollutant
+    # -------------------------
+
+    st.markdown(f"""
+    <div style="
+        background:#1E293B;
+        border-radius:14px;
+        padding:14px;
+        border:1px solid rgba(255,255,255,.05);
+    ">
+
+    <div style="
+        color:#94A3B8;
+        font-size:14px;
+    ">
+    Primary Pollutant
+    </div>
+
+    <div style="
+        color:white;
+        font-size:28px;
+        font-weight:700;
+        margin-top:5px;
+    ">
+    {pollutant}
+    </div>
+
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -------------------------
+    # AQI Description
+    # -------------------------
+
+    st.markdown(f"""
+    <div style="
+        margin-top:14px;
+        padding:14px;
+        background:#101827;
+        border-radius:14px;
+        color:#CBD5E1;
+        font-size:14px;
+        line-height:1.6;
+        border-left:4px solid {color};
+    ">
+
+    Current AQI : <b>{aqi}</b><br>
+
+    Air Quality Status :
+    <span style="color:{color};font-weight:700;">
+    {status}
+    </span>
+
+    </div>
+    """, unsafe_allow_html=True)
